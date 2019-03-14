@@ -1,4 +1,5 @@
-#define LIGHT_THRESHOLD 700
+#define LIGHT_THRESHOLD 700 //The threshold that determines whether or not a black line is beneath the sensor
+                            //Will require further testing and adjustments
 
 //Digital inputs/outputs
 int Lbumper = 0;
