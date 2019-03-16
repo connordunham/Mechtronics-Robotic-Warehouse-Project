@@ -24,6 +24,7 @@ void veer(int spd, int dir);
 void stop_robot();
 void turn(int spd, int dir);
 void print_sensor_vals(int sesn1_val, int sens2_val, int sens3_val);
+int check_bumper(int left_bumperPin, int right_bumperPin);
 
 //*************************************************************
 //*************************************************************
@@ -57,15 +58,12 @@ void pick_up_ball(int IR_sensor_val, int spd, int L, int C, int R){
    stop_robot();
 
 
-   Serial.println("Doing arm pick up");
+   Serial.println("Doing arm pick up");     //replace with a call to servo pick up Maneuver
    delay(5000);
    turn(200, 1, C_line_sensor);
    //***MAYBE ADD WHILE LOOP HERE TO BEARK OUT OF FUNCTION ONCE IT REACH FIRST INTERECTION
    trackline(L, C, R, C);
 }
-
-
-
 
 void trackline(int L, int C, int R, int spd){
   R = analogRead(R_line_sensor);
@@ -108,11 +106,11 @@ void veer(int spd, int dir){
     digitalWrite(M1, HIGH);
     digitalWrite(M2, HIGH);
     analogWrite(E1, spd);
-    analogWrite(E2, spd*);  // reduces speed of left motor to veer left
+    analogWrite(E2, spd*TURN_AJUSTMENT_RATION);  // reduces speed of left motor to veer left
   }else{                       //only other direction to veer is right if dir is not 1
     digitalWrite(M1, HIGH);
     digitalWrite(M2, HIGH);
-    analogWrite(E1, spd*0.7); // reduces speed of right motor to veer right
+    analogWrite(E1, spd*TURN_AJUSTMENT_RATION); // reduces speed of right motor to veer right
     analogWrite(E2, spd); 
   }
 }
@@ -121,6 +119,8 @@ void veer(int spd, int dir){
   void turn(int spd, int dir, int Csensor){//dir = 1 is left, dir = 0 is right
   int C = 0;
   
+  //Goes past the the insersection a little bit so it can performa a 90 degree turn
+  // Required adjust based of differing speed
   delay(50);
   analogWrite(E2, 100);
   analogWrite(E1, 100);
@@ -176,5 +176,33 @@ void print_sensor_vals(int sesn1_val, int sens2_val, int sens3_val){
   Serial.print(sens3_val);
   Serial.println(" ");
 }
+
+//Check state of both bumpers and returns:
+//3 --> Both bumpers hit    2--> Right bumper hit    1--> Left Bumper hit   0-->no bumper hit
+int check_bumper(int left_bumperPin, int right_bumperPin){
+  int bumper_state = 0;
+    
+  L_bumperState = digitalRead(left_bumperPin);
+  R_bumperState = digitalRead(right_bumperPin);
+  
+  if(L_bumperState || R_bumperState){             //Delays for a a moment to see if both bumpers were actually be meant to hit
+    delay(500);
+    if(L_bumperState && R_bumperState){
+      bumper_state = 3;
+    }else if(L_bumperState){
+      bumper_state = 2;
+    }else if(R_bumperState){
+      bumper_state = 1;
+    }else{
+      bumper_state = 0;
+    }
+    return bumper_state;
+  }
+  return bumper_state;        //Bumper was not triggeed and never entered if statements so it should be a zero
+      
+      
+  
+}
+  
 //*************************************************************
   
