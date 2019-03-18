@@ -26,7 +26,7 @@ int IR_receiver = 13;
 int R_line_sensor = A0;
 int C_line_sensor = A1;
 int L_line_sensor = A2;
-int force_sensor = A3;
+int fsrPin = A3;
 int IR_sensor = A5;
 
 
