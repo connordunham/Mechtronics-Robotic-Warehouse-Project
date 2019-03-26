@@ -10,6 +10,11 @@
 #define TURN_AJUSTMENT_RATION 0.65           // Ranges from 0.0 - 1.0. The lower the ration the fast the robot turns when it veers to
                                              // to correct its line tracking (ex 0.6 means that one motor speed is reduced to 60% of normal speed)
 
+#define REV_FROM_WALL_DIST  20                // Number of encoder ticks before we are the right distance from the vall to pick up dice
+#define REV_FROM_WALL_SPD   70                // A slow enough speed to ensure encoders are being properly read
+#define LEFT_ADJUST   1
+#define RIGHT_ADJUST  1.1
+
 //Digital inputs/outputs
 int Lbumper = 0;
 int Rbumper = 1;
@@ -80,6 +85,11 @@ int right_line = 0;
 int center_line = 0; 
 int IR_sensor_val = 0;
 int wall_entry_speed = 0;
+int fsrReading = 0;         //force sensor reading
+int Lbumper_val = 0;
+int Rbumper_val = 0;
+int encoder_state = 0;
+int encoder_state_prev = digitalRead(Rencoder);
 //--------------------------
 
 //Main loop
@@ -97,12 +107,33 @@ void loop() {
 
 
 void pick_up_ball(int IR_sensor_val, int spd, int L, int C, int R){
-
+//Uses Ir sensor to detect distance from wall
+  /*
   while(IR_sensor_val < IR_THRESHOLD){
       IR_sensor_val = analogRead(IR_sensor);
         Serial.println(IR_sensor_val);
       trackline(L, C, R, spd, 1);
     }
+    */
+//Uses bumpers to detect once robot hits wall
+  //Using bumpers to detect wall
+Lbumper_val = digitalRead(Lbumper);
+Rbumper_val - digitalRead(Rbumper);
+
+while(!Rbumper_val && !Lbumper){
+  Lbumper_val = digitalRead(Lbumper);
+  Rbumper_val - digitalRead(Rbumper);
+  trackline(L, C, R, spd);
+
+  Serial.print(Lbumper_val);
+  Serial.print("  |  ");
+  Serial.print(Rbumper_val);
+  Serial.println("");
+  delay(50);
+}
+
+  reverse_dist(REV_FROM_WALL_DIST, REV_FROM_WALL_SPD);
+  
     // We are at the wall
    stop_robot();
 
@@ -156,13 +187,13 @@ void veer(int spd, int dir){
   if(dir == 1){
     digitalWrite(M1, HIGH);
     digitalWrite(M2, HIGH);
-    analogWrite(E1, spd);
-    analogWrite(E2, spd*TURN_AJUSTMENT_RATION);  // reduces speed of left motor to veer left
+    analogWrite(E1, spd*RIGHT_ADJUST);
+    analogWrite(E2, spd*TURN_AJUSTMENT_RATION*LEFT_ADJUST);  // reduces speed of left motor to veer left
   }else{                       //only other direction to veer is right if dir is not 1
     digitalWrite(M1, HIGH);
     digitalWrite(M2, HIGH);
-    analogWrite(E1, spd*TURN_AJUSTMENT_RATION); // reduces speed of right motor to veer right
-    analogWrite(E2, spd); 
+    analogWrite(E1, spd*TURN_AJUSTMENT_RATION*RIGHT_ADJUST); // reduces speed of right motor to veer right
+    analogWrite(E2, spd*LEFT_ADJUST); 
   }
 }
 
@@ -172,12 +203,15 @@ void veer(int spd, int dir){
   
   //Goes past the the insersection a little bit so it can performa a 90 degree turn
   // Required adjust based of differing speed
-  delay(50);
+  
+  // Not needed for pick up ball -------------------------------------------
+  /*delay(50);
   analogWrite(E2, 100);
   analogWrite(E1, 100);
   digitalWrite(M2, HIGH);
   digitalWrite(M1, HIGH);
-  delay(700);
+  delay(700);*/
+   //-------------------------------------------------------------------------
   if(dir == 1){
      analogWrite(E2, spd);
      analogWrite(E1, spd);
@@ -217,6 +251,29 @@ void stop_robot(){
   analogWrite(E1, 0);
   analogWrite(E2, 0);
 }
+
+//Reveses the robot after hitting the wall using the encoders
+//Allows robot to reach a percise distance from the wall
+void reverse_dist(int dist, int spd){
+    
+    int count = 0;
+    
+    while(count < dist){
+
+        encoder_state_prev = encoder_state;
+        encoder_state = digitalRead(Rencoder);
+        
+        if( encoder_state != encoder_state_prev){
+          count++;
+        }
+        
+        digitalWrite(M1, LOW);
+        digitalWrite(M2, LOW);
+        analogWrite(E1, spd);
+        analogWrite(E2, spd);
+        
+    }
+    
 
 //Takes in the values of threes sensors and prints them legibly in Serial monitor
 void print_sensor_vals(int sesn1_val, int sens2_val, int sens3_val){
