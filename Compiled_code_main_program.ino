@@ -17,7 +17,7 @@
 
 //Digital inputs/outputs
 int Lbumper = 0;
-int Rbumper = 1;
+int Rbumper = 11;          //For some reason it only works with pin 11 for team 10s robot
 int M2 = 4;                //Left motor
 int E2 = 5;
 int E1 = 6;               //Right motor
