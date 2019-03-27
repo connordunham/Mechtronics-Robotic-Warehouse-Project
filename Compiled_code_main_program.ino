@@ -308,7 +308,82 @@ int check_bumper(int left_bumperPin, int right_bumperPin){
     return bumper_state;
   }
   return bumper_state;        //Bumper was not triggeed and never entered if statements so it should be a zero
-      
-      
-  
 }
+  
+//Check state of both bumpers and returns:
+//3 --> Both bumpers hit    2--> Right bumper hit    1--> Left Bumper hit   0-->no bumper hit
+/*
+int check_bumper(int left_bumperPin, int right_bumperPin){
+  int bumper_state = 0;
+    
+  L_bumperState = digitalRead(left_bumperPin);
+  R_bumperState = digitalRead(right_bumperPin);
+  
+  if(L_bumperState || R_bumperState){             //Delays for a a moment to see if both bumpers were actually be meant to hit
+    delay(500);
+    if(L_bumperState && R_bumperState){
+      bumper_state = 3;
+    }else if(L_bumperState){
+      bumper_state = 2;
+    }else if(R_bumperState){
+      bumper_state = 1;
+    }else{
+      bumper_state = 0;
+    }
+    return bumper_state;
+  }
+  return bumper_state;        //Bumper was not triggeed and never entered if statements so it should be a zero
+}
+}
+*/
+
+void center(){
+  panS.write(110);
+  gripS.write(0);
+  for(int i = 160; i> 10; i--){
+    tiltS.write(i);
+    delay(35);
+  }
+
+}
+
+void PickUpBall(){
+  int grippingBOOL = 0;
+  
+  center();
+  while (!grippingBOOL){
+    grippingBOOL = beginGripping(); //1 griped 0 not gripped
+  }
+}
+
+int beginGripping(){
+  //int fsrReading = 0;
+  //center(); // i moved rgus
+  for(int i = 0; i<90; i++){
+    gripS.write(i);
+    fsrReading = analogRead(fsrPin);  
+    delay(60);
+    
+
+    if(fsrReading>850){
+      tiltS.write(50);
+      return 1;
+    }
+    if (i >= 89){
+      i = 0;
+      return 0;
+    }
+  }
+}
+
+int dropBall(int doItNow){
+  if (doItNow == 1){
+    
+    
+      gripS.write(0);
+      delay(20);
+    
+    return 0;
+  }
+}
+
