@@ -22,8 +22,8 @@ int M2 = 4;                //Left motor
 int E2 = 5;
 int E1 = 6;               //Right motor
 int M1 = 7;
-int Rencoder = 8;         //Removed from robot for now
-int Lencoder = 9;         //Removed from robot for now
+int Rencoder = 3;         //Removed from robot for now
+int Lencoder = 2;         //Removed from robot for now
 int PAN_servo = 8;  
 int TILT_servo = 9;
 int GRIP_servo = 10;
@@ -120,7 +120,8 @@ void pick_up_ball(int IR_sensor_val, int spd, int L, int C, int R){
 Lbumper_val = digitalRead(Lbumper);
 Rbumper_val - digitalRead(Rbumper);
 
-while(!Rbumper_val && !Lbumper){
+while(Rbumper_val == 1 && Lbumper == 1){
+  
   Lbumper_val = digitalRead(Lbumper);
   Rbumper_val - digitalRead(Rbumper);
   trackline(L, C, R, spd);
