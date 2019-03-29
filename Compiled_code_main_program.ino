@@ -52,9 +52,11 @@ void trackline(int L, int C, int R, int spd);
 void forward_straight(int spd);
 void veer(int spd, int dir);
 void stop_robot();
-void turn(int spd, int dir);
+void turn_wall(int spd, int dir);
 void print_sensor_vals(int sesn1_val, int sens2_val, int sens3_val);
 int check_bumper(int left_bumperPin, int right_bumperPin);
+void forward(int numOfIntersections);
+void turn(int dir);
 //------------------------------------------------------------------------^^
 
 
@@ -108,7 +110,11 @@ int action_pickup = 0;      //Tell robot to drop ball (0) or pick up ball (1)
 int cy = 0;                 //Initial starting position and direction
 int cx = 2;
 int cd = 0;
+int plVal = 0;
+int pcVal = 0;
+int prVal = 0;
 unsigned long lastInter = 0;    //Keeps track of a time interval bewteen intersection detections
+
 
 //--------------------------
 
@@ -446,6 +452,7 @@ void GoToDice(int x, int y, int d)
       turn(0);
     }
   }
+}
   
   //Function to move robot forward a specified number of intersections
 void forward(int numOfIntersections) {
@@ -516,8 +523,8 @@ void turn(int dir) {
       Serial.println("HERE");
       Serial.println(C);
       
-      analogWrite(E2, spd);
-      analogWrite(E1, spd);
+      analogWrite(E2, GOTOSPEED);
+      analogWrite(E1, GOTOSPEED);
       if(dir = 1){
         digitalWrite(M2, LOW);
         digitalWrite(M1, HIGH);
@@ -525,11 +532,9 @@ void turn(int dir) {
         digitalWrite(M2, HIGH);
         digitalWrite(M1, LOW);
       }
-     C = analogRead(Csensor);
+     C = analogRead(C_line_sensor);
     
     }
     analogWrite(E2, 0);
     analogWrite(E1, 0);
 }
-
-
