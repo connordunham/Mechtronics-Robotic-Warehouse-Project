@@ -17,6 +17,8 @@
 #define LEFT_ADJUST   1
 #define RIGHT_ADJUST  1.1
 
+#define GOTOSPEED 100
+
 
 Servo panS, tiltS, gripS; //Create the 3 servo motor objects
 
@@ -103,6 +105,11 @@ int Rbumper_val = 0;
 int encoder_state = 0;
 int encoder_state_prev = digitalRead(Rencoder);
 int action_pickup = 0;      //Tell robot to drop ball (0) or pick up ball (1)
+int cy = 0;                 //Initial starting position and direction
+int cx = 2;
+int cd = 0;
+unsigned long lastInter = 0;    //Keeps track of a time interval bewteen intersection detections
+
 //--------------------------
 
 //Main loop
@@ -163,7 +170,7 @@ void pick_up_ball(int IR_sensor_val, int spd, int L, int C, int R, int ACTION){
       dropBall(1);
    }
    delay(1000);
-   turn(100, 1, C_line_sensor);
+   turn_wall(100, 1, C_line_sensor);
    //***MAYBE ADD WHILE LOOP HERE TO BEARK OUT OF FUNCTION ONCE IT REACH FIRST INTERECTION
    while(1){
     trackline(L, C, R, spd);
@@ -231,7 +238,7 @@ void veer(int spd, int dir){
 }
 
 //**** Void turn was from one of the other groups code on their GIT respository
-  void turn(int spd, int dir, int Csensor){//dir = 1 is left, dir = 0 is right
+  void turn_wall(int spd, int dir, int Csensor){//dir = 1 is left, dir = 0 is right
   int C = 0;
   
   //Goes past the the insersection a little bit so it can performa a 90 degree turn
@@ -397,4 +404,132 @@ int dropBall(int doItNow){
     return 0;
   }
 }
+
+//Function for robot to move to a specified ball's location
+void GoToDice(int x, int y, int d)
+{
+  if (cy < y) { //if current y coordinate is less than the objective y then move forward until current y is equal to that of the objective
+    forward(y - cy);
+    cy = y;
+
+  }
+  if (cx != x) { //if the objective is not directly infront of the robot then turn in the direction of the ball and go forward until the ball is in front of the robot
+    if (cx < x) {
+      turn(0);
+      forward(x - cx);
+      cx = x;
+    }
+    else if (cx > x) {
+      turn(1);
+      forward(cx - x);
+      cx = x;
+    }
+
+  }
+  if (cd != d) { //if the robot is not facing the ball, then turn towards the ball
+    if (abs(cd - d) == 2) {
+      turn(1);
+      turn(1);
+    }
+    else if (cd - d == -3) {
+      turn (1);
+    }
+    else if (cd - d == 3) {
+      turn (0);
+    }
+    else if (cd - d > 0)
+    {
+      turn(1);
+    }
+    else if (cd - d < 0)
+    {
+      turn(0);
+    }
+  }
+  
+  //Function to move robot forward a specified number of intersections
+void forward(int numOfIntersections) {
+  int intersectionCount = 0;
+  int rVal = 0;
+  int cVal = 0;
+  int lVal = 0;
+  forward_straight(GOTOSPEED);
+
+  //While not at the desired intersection, keep moving forward
+  while (intersectionCount < numOfIntersections) {
+    lVal = analogRead(L_line_sensor);
+    cVal = analogRead(C_line_sensor);
+    rVal = analogRead(R_line_sensor);
+  
+    trackline(L_line_sensor, C_line_sensor, R_line_sensor, GOTOSPEED);
+
+    if ((lVal > LIGHT_THRESHOLD) && (cVal > LIGHT_THRESHOLD) && (rVal > LIGHT_THRESHOLD) && (plVal > LIGHT_THRESHOLD) && (pcVal > LIGHT_THRESHOLD) && (prVal > LIGHT_THRESHOLD)) { //At an intersection. Increment intersection counter
+      if ((millis() - lastInter) > 200) {
+        Serial.println("INTERSECTION");
+
+        intersectionCount++;
+        Serial.println(intersectionCount);
+        lastInter = millis();
+
+      }
+    }
+    plVal = lVal;
+    pcVal = cVal;
+    prVal = rVal;
+  }
+  stop_robot();
+  delay(200);
+}
+
+
+//Function to turn in a specified direction until a black line is hit
+void turn(int dir) {
+  int C = 0;
+  //drive a little past the intersection
+  //delay(50);
+  forward_straight(GOTOSPEED);
+  delay(400);
+
+  if (dir == 1) { //Begin turning counter-clockwise to ensure that center line sensor is not scaning the black tape
+    analogWrite(E2, GOTOSPEED);
+     analogWrite(E1, GOTOSPEED);
+     digitalWrite(M2, LOW);
+     digitalWrite(M1, HIGH);
+    delay(550);
+    if (cd == 0) { //Update direction robot is facing
+      cd = 3;
+    } else {
+      cd = cd - 1;
+    }
+  }
+  else { //Begin turning clockwise to ensure that center line sensor is not scaning the black tape
+     analogWrite(E2, GOTOSPEED);
+     analogWrite(E1, GOTOSPEED);
+     digitalWrite(M2, HIGH);
+     digitalWrite(M1, LOW);
+    delay(300);
+    cd = (cd + 1) % 4; //Update direction robot is facing
+  }
+     C = analogRead(C_line_sensor);
+  
+   while(C<LIGHT_THRESHOLD){
+      Serial.println("HERE");
+      Serial.println(C);
+      
+      analogWrite(E2, spd);
+      analogWrite(E1, spd);
+      if(dir = 1){
+        digitalWrite(M2, LOW);
+        digitalWrite(M1, HIGH);
+      }else{
+        digitalWrite(M2, HIGH);
+        digitalWrite(M1, LOW);
+      }
+     C = analogRead(Csensor);
+    
+    }
+    analogWrite(E2, 0);
+    analogWrite(E1, 0);
+}
+
 
